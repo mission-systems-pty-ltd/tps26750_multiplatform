@@ -25,6 +25,20 @@
 #define TPS26750_STM32_I2C_TIMEOUT_MS 5u
 #endif
 
+#ifdef TPS26750_PLATFORM_LINUX
+#include <sys/ioctl.h>
+#include <linux/i2c.h>
+#include <linux/i2c-dev.h>
+
+static bool linux_i2c_transfer(int fd, struct i2c_msg* messages, uint32_t count)
+{
+    struct i2c_rdwr_ioctl_data transfer;
+    transfer.msgs = messages;
+    transfer.nmsgs = count;
+    return ioctl(fd, I2C_RDWR, &transfer) == (int)count;
+}
+#endif
+
 /**
  * @brief Check whether a TPS26750 acknowledges its address on the bus.
  * @param bus The bus handle to use.
@@ -45,6 +59,14 @@ bool tps26750_i2c_probe(bus_handle_t bus, uint8_t device_address)
 #elif defined(TPS26750_PLATFORM_RP2040)
     uint8_t reg = 0;
     return i2c_write_timeout_us(bus, device_address, &reg, 1, false, TPS26750_RP2040_I2C_TIMEOUT_US) == 1;
+#elif defined(TPS26750_PLATFORM_LINUX)
+    uint8_t reg = 0;
+    struct i2c_msg message;
+    message.addr = device_address;
+    message.flags = 0;
+    message.len = 1;
+    message.buf = &reg;
+    return linux_i2c_transfer(*bus, &message, 1);
 #else
     (void)device_address;
     return false;
@@ -73,6 +95,13 @@ bool tps26750_i2c_write(bus_handle_t bus, uint8_t device_address, const uint8_t*
     return HAL_I2C_Master_Transmit(bus, (uint16_t)(device_address << 1), (uint8_t*)data, (uint16_t)length, TPS26750_STM32_I2C_TIMEOUT_MS) == HAL_OK;
 #elif defined(TPS26750_PLATFORM_RP2040)
     return i2c_write_timeout_us(bus, device_address, data, length, false, TPS26750_RP2040_I2C_TIMEOUT_US) == (int)length;
+#elif defined(TPS26750_PLATFORM_LINUX)
+    struct i2c_msg message;
+    message.addr = device_address;
+    message.flags = 0;
+    message.len = (uint16_t)length;
+    message.buf = (uint8_t*)data;
+    return linux_i2c_transfer(*bus, &message, 1);
 #else
     (void)device_address;
     (void)data;
@@ -126,6 +155,17 @@ bool tps26750_i2c_write_read(bus_handle_t bus, uint8_t device_address, uint8_t r
         return false;
     }
     return i2c_read_timeout_us(bus, device_address, dest, length, false, TPS26750_RP2040_I2C_TIMEOUT_US) == (int)length;
+#elif defined(TPS26750_PLATFORM_LINUX)
+    struct i2c_msg messages[2];
+    messages[0].addr = device_address;
+    messages[0].flags = 0;
+    messages[0].len = 1;
+    messages[0].buf = &reg;
+    messages[1].addr = device_address;
+    messages[1].flags = I2C_M_RD;
+    messages[1].len = (uint16_t)length;
+    messages[1].buf = dest;
+    return linux_i2c_transfer(*bus, messages, 2);
 #else
     (void)device_address;
     (void)reg;

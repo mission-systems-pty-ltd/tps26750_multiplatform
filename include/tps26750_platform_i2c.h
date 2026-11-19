@@ -35,6 +35,8 @@
     typedef I2C_HandleTypeDef* bus_handle_t;
 #elif defined(PLATFORM_RP2040)
     typedef i2c_inst_t* bus_handle_t;
+#elif defined(PLATFORM_LINUX)
+    typedef int* bus_handle_t;   // open /dev/i2c-N file descriptor, owned by the caller
 #else
     typedef void* bus_handle_t;
 #endif

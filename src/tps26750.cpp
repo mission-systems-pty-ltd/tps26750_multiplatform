@@ -17,6 +17,10 @@
 #include "pico/time.h"
 #endif
 
+#if defined(TPS26750_PLATFORM_LINUX)
+#include <time.h>
+#endif
+
 //      REGISTERS                        ADDRESS    SIZE  RW   (TRM Table 4-1)
 #define TPS26750_REG_MODE                0x03    //   4   bytes
 #define TPS26750_REG_CUST_USE            0x06    //   8   bytes
@@ -134,6 +138,10 @@ inline uint32_t platformMillis()
     return HAL_GetTick();
 #elif defined(TPS26750_PLATFORM_RP2040)
     return to_ms_since_boot(get_absolute_time());
+#elif defined(TPS26750_PLATFORM_LINUX)
+    struct timespec now;
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (uint32_t)((uint64_t)now.tv_sec * 1000u + (uint64_t)now.tv_nsec / 1000000u);
 #else
     return 0;
 #endif
@@ -147,6 +155,11 @@ inline void platformDelayMs(uint32_t ms)
     HAL_Delay(ms);
 #elif defined(TPS26750_PLATFORM_RP2040)
     sleep_ms(ms);
+#elif defined(TPS26750_PLATFORM_LINUX)
+    struct timespec pause;
+    pause.tv_sec = ms / 1000u;
+    pause.tv_nsec = (long)(ms % 1000u) * 1000000L;
+    nanosleep(&pause, NULL);
 #else
     (void)ms;
 #endif
