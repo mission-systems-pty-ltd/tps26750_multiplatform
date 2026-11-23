@@ -112,7 +112,7 @@
     #include <string.h>
 
 #else
-    #error "Unsupported platform. Define TPS26750_PLATFORM_ARDUINO, TPS26750_PLATFORM_STM32, TPS26750_PLATFORM_RP2040, or TPS26750_PLATFORM_NATIVE manually."
+    #error "Unsupported platform. Define TPS26750_PLATFORM_ARDUINO, TPS26750_PLATFORM_STM32, TPS26750_PLATFORM_RP2040, or TPS26750_PLATFORM_NATIVE manually (Linux is detected automatically)."
 #endif
 
 #endif /* TPS26750_PLATFORM_CONFIG_H */

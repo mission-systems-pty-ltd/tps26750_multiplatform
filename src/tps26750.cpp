@@ -253,6 +253,17 @@ bool TPS26750::readRegister(uint8_t reg, uint8_t* dest, uint8_t len)
         return false;
     }
 
+#if defined(TPS26750_PLATFORM_LINUX)
+    // The byte count is the register's size, so a shorter count means the
+    // register is unavailable (e.g. BOOT/PTCH mode); zero-filled data could be
+    // written back by a read-modify-write.
+    if (bytesReturned < len)
+    {
+        _error = TPS26750_ERR_I2C;
+        return false;
+    }
+#endif
+
     // A short read (device reported fewer bytes than requested) would otherwise
     // leave the tail of dest uninitialized. Zero dest first so callers that don't
     // check the count never read stale stack.
