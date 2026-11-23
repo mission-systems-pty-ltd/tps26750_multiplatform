@@ -16,7 +16,7 @@
 #pragma once
 #include "tps26750_platform_i2c.h"
 
-#define TPS26750_LIB_VERSION          ("1.0.0")
+#define TPS26750_LIB_VERSION          ("1.0.2")
 
 // I2C Default Address Options (Decoded from ADCINx pins)
 // #1: 0x20, #2: 0x21, #3: 0x22, #4: 0x23
